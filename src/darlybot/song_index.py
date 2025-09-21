@@ -142,6 +142,14 @@ class SongIndex:
         if self._is_ascii_letter(entry.letter):
             steps.append(entry.letter.lower())
             current_index = self.letter_anchor(entry.letter)
+        elif entry.letter in (self._SYMBOL_LETTER, self._NUMBER_LETTER):
+            anchor_letter = "A"
+            try:
+                current_index = self.letter_anchor(anchor_letter)
+            except SongIndexError:
+                current_index = 0
+            else:
+                steps.append(anchor_letter.lower())
         else:
             current_index = 0
 

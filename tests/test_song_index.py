@@ -4,6 +4,7 @@ import pytest
 
 from darlybot.song_index import (
     SCROLL_DOWN_KEY,
+    SCROLL_UP_KEY,
     SongIndex,
     SongNotFoundError,
 )
@@ -68,7 +69,13 @@ def test_key_sequence_for_symbol_title(sample_index: SongIndex) -> None:
     entry = sample_index.get_by_title_number("0003")
     assert entry.letter == "특수문자"
     sequence = sample_index.key_sequence_for(entry)
-    assert sequence == ["shift_r", "shift", SCROLL_DOWN_KEY, SCROLL_DOWN_KEY]
+    assert sequence == [
+        "shift_r",
+        "shift",
+        "a",
+        SCROLL_UP_KEY,
+        SCROLL_UP_KEY,
+    ]
 
 
 def test_key_sequence_for_number_title(sample_index: SongIndex) -> None:
@@ -78,9 +85,8 @@ def test_key_sequence_for_number_title(sample_index: SongIndex) -> None:
     assert sequence == [
         "shift_r",
         "shift",
-        SCROLL_DOWN_KEY,
-        SCROLL_DOWN_KEY,
-        SCROLL_DOWN_KEY,
+        "a",
+        SCROLL_UP_KEY,
     ]
 
 
