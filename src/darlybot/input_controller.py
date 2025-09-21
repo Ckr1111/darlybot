@@ -16,6 +16,12 @@ __all__ = [
 _LOGGER = logging.getLogger(__name__)
 
 
+_PYAUTOGUI_KEY_ALIASES = {
+    "pageup": "pgup",
+    "pagedown": "pgdn",
+}
+
+
 class DJMaxInputController(InputController):
     """Send key presses directly to the DJMAX RESPECT V client."""
 
@@ -68,8 +74,16 @@ class DJMaxInputController(InputController):
                 _LOGGER.debug("Scrolling down via mouse wheel")
                 pyautogui.scroll(-1)
             else:
-                _LOGGER.debug("Pressing key: %s", key)
-                pyautogui.press(key)
+                actual_key = _PYAUTOGUI_KEY_ALIASES.get(key, key)
+                if actual_key != key:
+                    _LOGGER.debug(
+                        "Pressing key: %s (pyautogui alias: %s)",
+                        key,
+                        actual_key,
+                    )
+                else:
+                    _LOGGER.debug("Pressing key: %s", key)
+                pyautogui.press(actual_key)
             time.sleep(self.key_delay)
 
 
