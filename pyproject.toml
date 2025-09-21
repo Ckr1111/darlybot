@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "darlybot"
+version = "0.1.0"
+description = "Local bridge between Lopebot web app and DJMAX RESPECT V."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  {name = "Ckr1111"},
+]
+dependencies = [
+  "aiohttp>=3.9",
+  "pywin32>=306; platform_system == 'Windows'",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
