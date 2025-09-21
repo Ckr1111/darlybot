@@ -43,7 +43,7 @@ class DJMaxInputController(InputController):
         *,
         window_title: str = "DJMAX RESPECT V",
         activation_delay: float = 0.3,
-        key_delay: float = 0.3,
+        key_delay: float = 0.08,
     ) -> None:
         self.window_title = window_title
         self.activation_delay = activation_delay
