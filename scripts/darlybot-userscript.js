@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Darlybot Helper
+// @name         Darlybot Helper (B300 맞춤)
 // @namespace    https://github.com/
-// @version      0.1
-// @description  Connect Lopebot tiles with the local Darlybot helper.
+// @version      0.2
+// @description  b300.vercel.app 타일에서 곡 정보를 추출해 로컬 Darlybot Helper로 전송
 // @match        https://b300.vercel.app/*
 // @grant        none
 // ==/UserScript==
@@ -11,7 +11,8 @@
   'use strict';
 
   const API_BASE = 'http://127.0.0.1:8972';
-  const TILE_SELECTOR = '[data-title-number], [data-song-id], [data-song-title]';
+  // .tile 요소도 인식하도록 수정
+  const TILE_SELECTOR = '.tile, [data-title-number], [data-song-id], [data-song-title]';
 
   function findTile(element) {
     return element.closest(TILE_SELECTOR);
@@ -19,18 +20,26 @@
 
   function extractSong(tile) {
     const dataset = tile.dataset || {};
-    const titleNumber = dataset.titleNumber || dataset.songId || dataset.id || '';
 
-    let title = dataset.title || dataset.songTitle || '';
-    if (!title) {
-      const titleElement = tile.querySelector('[data-title], [data-song-title], .title, .name');
-      if (titleElement) {
-        title = titleElement.textContent.trim();
-      }
-    }
-    if (!title) {
-      title = tile.textContent.trim();
-    }
+    // title_number 우선순위: data-* → img src 숫자
+    let titleNumber =
+      dataset.titleNumber ||
+      dataset.songId ||
+      dataset.id ||
+      (() => {
+        const img = tile.querySelector('.cover img, img');
+        const src = img?.getAttribute('src') || '';
+        const m = src.match(/\/(\d+)\.(?:jpg|jpeg|png|webp)(?:\?|#|$)/i);
+        return m ? m[1] : '';
+      })();
+
+    // title 우선순위: data-* → .title → img alt → 전체 텍스트
+    let title =
+      dataset.title ||
+      dataset.songTitle ||
+      tile.querySelector('.meta-wrap .title, .title')?.textContent?.trim() ||
+      tile.querySelector('.cover img, img')?.getAttribute('alt')?.trim() ||
+      tile.textContent.trim();
 
     return {
       title_number: titleNumber || undefined,
@@ -61,6 +70,7 @@
     }
   }
 
+  // 우클릭 이벤트 후킹
   document.addEventListener('contextmenu', (event) => {
     const tile = findTile(event.target);
     if (!tile) {
@@ -71,5 +81,5 @@
     sendNavigate(payload);
   }, true);
 
-  console.log('[darlybot] 로페봇 타일 우클릭 연동 스크립트가 활성화되었습니다.');
+  console.log('[darlybot] B300 타일 우클릭 연동 스크립트가 활성화되었습니다.');
 })();
