@@ -12,7 +12,12 @@ __all__ = [
     "SongIndex",
     "SongNotFoundError",
     "SongIndexError",
+    "SCROLL_UP_KEY",
+    "SCROLL_DOWN_KEY",
 ]
+
+SCROLL_UP_KEY = "scroll_up"
+SCROLL_DOWN_KEY = "scroll_down"
 
 
 @dataclass(frozen=True)
@@ -131,9 +136,9 @@ class SongIndex:
         letter_index = self.letter_anchor(entry.letter)
         offset = entry.index - letter_index
         if offset < 0:
-            arrow = "up"
+            arrow = SCROLL_UP_KEY
         else:
-            arrow = "down"
+            arrow = SCROLL_DOWN_KEY
         steps = prefix
         for _ in range(abs(offset)):
             steps.append(arrow)

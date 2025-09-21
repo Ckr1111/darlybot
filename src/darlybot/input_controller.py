@@ -6,6 +6,7 @@ import time
 from typing import Iterable, List, Sequence
 
 from .navigator import InputController
+from .song_index import SCROLL_DOWN_KEY, SCROLL_UP_KEY
 
 __all__ = [
     "DJMaxInputController",
@@ -60,8 +61,15 @@ class DJMaxInputController(InputController):
             ) from exc
 
         for key in keys:
-            _LOGGER.debug("Pressing key: %s", key)
-            pyautogui.press(key)
+            if key == SCROLL_UP_KEY:
+                _LOGGER.debug("Scrolling up via mouse wheel")
+                pyautogui.scroll(1)
+            elif key == SCROLL_DOWN_KEY:
+                _LOGGER.debug("Scrolling down via mouse wheel")
+                pyautogui.scroll(-1)
+            else:
+                _LOGGER.debug("Pressing key: %s", key)
+                pyautogui.press(key)
             time.sleep(self.key_delay)
 
 
