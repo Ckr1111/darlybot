@@ -6,7 +6,7 @@
 
 ## 구성 요소
 
-- `곡순서.csv` : 게임 내 곡 순서를 정의하는 데이터. 첫 번째 열은 `title_number`, 두 번째 열은 `title`입니다. 저장소에는 예시 데이터가 포함되어 있으며 실제 사용 시에는 최신 곡 순서로 교체하세요.
+- `default.csv` : 게임 내 곡 순서를 정의하는 데이터. 첫 번째 열은 `title_number`, 두 번째 열은 `title`입니다. 저장소에는 예시 데이터가 포함되어 있으며 실제 사용 시에는 최신 곡 순서로 교체하세요.
 - Python 애플리케이션 : CSV를 읽어 곡 위치를 계산하고, HTTP API를 통해 외부 명령을 받아 DJMAX 창으로 키 입력을 전송합니다.
 - (선택) 브라우저 사용자 스크립트 : 로페봇 타일을 우클릭했을 때 로컬 API를 호출하도록 도와줍니다. `scripts/darlybot-userscript.js` 파일을 Tampermonkey 등에 등록하여 사용할 수 있습니다.
 
@@ -23,7 +23,7 @@
 3. 애플리케이션을 실행합니다.
 
    ```bash
-   python -m darlybot --csv /경로/곡순서.csv
+   python -m darlybot --csv /경로/default.csv
    # 또는 설치 후에는 darlybot 명령을 직접 사용할 수 있습니다.
    darlybot --port 8972 --window-title "DJMAX RESPECT V"
    ```
@@ -61,14 +61,14 @@ Windows 환경에서 손쉽게 실행할 수 있도록 PyInstaller를 사용한 
 
 ```bash
 pip install pyinstaller
-pyinstaller --name darlybot --onefile --add-data "data\\곡순서.csv;data" --add-data "scripts\\darlybot-userscript.js;scripts" -m darlybot
+pyinstaller --name darlybot --onefile --add-data "data\\default.csv;data" --add-data "scripts\\darlybot-userscript.js;scripts" -m darlybot
 ```
 
-> 💡  Git Bash, macOS, 또는 Linux 셸에서는 경로 구분자를 `/` 로 바꾸고 `:` 를 사용해 목적지를 지정하세요. 예: `--add-data "data/곡순서.csv:data"`.
+> 💡  Git Bash, macOS, 또는 Linux 셸에서는 경로 구분자를 `/` 로 바꾸고 `:` 를 사용해 목적지를 지정하세요. 예: `--add-data "data/default.csv:data"`.
 
-위 명령은 저장소의 `data/곡순서.csv` 와 브라우저 사용자 스크립트(`scripts/darlybot-userscript.js`)를 함께 복사하고, `-m darlybot` 으로 `src/darlybot/__main__.py` 엔트리 포인트를 실행하도록 패키징합니다.
+위 명령은 저장소의 `data/default.csv` 와 브라우저 사용자 스크립트(`scripts/darlybot-userscript.js`)를 함께 복사하고, `-m darlybot` 으로 `src/darlybot/__main__.py` 엔트리 포인트를 실행하도록 패키징합니다.
 
-빌드가 완료되면 `dist/darlybot.exe` 가 생성됩니다. `곡순서.csv` 파일을 실행 파일과 같은 폴더에 배치하면 애플리케이션이 자동으로 인식합니다. 다른 위치에 둘 경우 `--csv` 옵션으로 경로를 지정하세요.
+빌드가 완료되면 `dist/darlybot.exe` 가 생성됩니다. `default.csv` 파일을 실행 파일과 같은 폴더에 배치하면 애플리케이션이 자동으로 인식합니다. 다른 위치에 둘 경우 `--csv` 옵션으로 경로를 지정하세요.
 
 ## 테스트
 

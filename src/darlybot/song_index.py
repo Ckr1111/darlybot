@@ -22,7 +22,7 @@ SCROLL_DOWN_KEY = "scroll_down"
 
 @dataclass(frozen=True)
 class SongEntry:
-    """Represents a single song row from ``곡순서.csv``."""
+    """Represents a single song row from ``default.csv``."""
 
     index: int
     title_number: str
@@ -91,7 +91,7 @@ class SongIndex:
             return self._by_number[str(title_number).strip()]
         except KeyError as exc:  # pragma: no cover - trivial mapping lookup
             raise SongNotFoundError(
-                f"곡 번호 '{title_number}' 를 곡순서.csv 에서 찾을 수 없습니다."
+                f"곡 번호 '{title_number}' 를 default.csv 에서 찾을 수 없습니다."
             ) from exc
 
     def get_by_title(self, title: str) -> SongEntry:
@@ -100,7 +100,7 @@ class SongIndex:
             return self._by_title[key]
         except KeyError as exc:  # pragma: no cover - trivial mapping lookup
             raise SongNotFoundError(
-                f"제목 '{title}' 를 곡순서.csv 에서 찾을 수 없습니다."
+                f"제목 '{title}' 를 default.csv 에서 찾을 수 없습니다."
             ) from exc
 
     def letter_anchor(self, letter: str) -> int:
@@ -148,19 +148,19 @@ class SongIndex:
     def _load(self) -> None:
         if not self.csv_path.exists():
             raise FileNotFoundError(
-                f"곡순서.csv 파일을 찾을 수 없습니다: {self.csv_path}"
+                f"default.csv 파일을 찾을 수 없습니다: {self.csv_path}"
             )
 
         with self.csv_path.open("r", encoding="utf-8-sig", newline="") as fh:
             reader = csv.DictReader(fh)
             if not reader.fieldnames:
                 raise SongIndexError(
-                    "곡순서.csv 파일에 헤더가 없습니다. 'title_number,title' 형식을 사용하세요."
+                    "default.csv 파일에 헤더가 없습니다. 'title_number,title' 형식을 사용하세요."
                 )
             headers = {name.lower(): name for name in reader.fieldnames}
             if "title_number" not in headers or "title" not in headers:
                 raise SongIndexError(
-                    "곡순서.csv 파일은 'title_number' 와 'title' 헤더를 포함해야 합니다."
+                    "default.csv 파일은 'title_number' 와 'title' 헤더를 포함해야 합니다."
                 )
 
             title_number_key = headers["title_number"]

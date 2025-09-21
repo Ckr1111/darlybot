@@ -30,5 +30,5 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 darlybot = [
-    "data/곡순서.csv",
+    "data/default.csv",
 ]

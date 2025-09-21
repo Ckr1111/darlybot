@@ -52,7 +52,7 @@ class SongNavigator:
         Parameters
         ----------
         title_number:
-            The ``title_number`` column from ``곡순서.csv``.
+            The ``title_number`` column from ``default.csv``.
         title:
             The human readable title.  Case is ignored.
         dry_run:

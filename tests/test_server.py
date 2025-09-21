@@ -13,7 +13,7 @@ from darlybot.song_index import SongIndex
 
 @pytest.fixture()
 def sample_server(tmp_path):
-    csv_path = tmp_path / "곡순서.csv"
+    csv_path = tmp_path / "default.csv"
     csv_path.write_text(
         "title_number,title\n0001,Alpha\n0002,Beta\n0003,Bolt\n",
         encoding="utf-8",
