@@ -1,4 +1,4 @@
-from .app import main
+from darlybot.app import main
 
 if __name__ == "__main__":  # pragma: no cover - CLI entry point
     raise SystemExit(main())
