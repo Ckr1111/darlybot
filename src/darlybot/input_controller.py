@@ -16,6 +16,17 @@ __all__ = [
 _LOGGER = logging.getLogger(__name__)
 
 
+_SPECIAL_KEY_ALIASES = {
+    "pageup": "page_up",
+    "pagedown": "page_down",
+    "capslock": "caps_lock",
+    "numlock": "num_lock",
+    "scrolllock": "scroll_lock",
+    "printscreen": "print_screen",
+    "spacebar": "space",
+}
+
+
 class DJMaxInputController(InputController):
     """Send key presses directly to the DJMAX RESPECT V client."""
 
@@ -60,6 +71,32 @@ class DJMaxInputController(InputController):
                 "pyautogui 모듈이 설치되어 있지 않습니다. 'pip install pyautogui' 를 실행해주세요."
             ) from exc
 
+        try:
+            from pynput.keyboard import Controller, Key
+        except ImportError as exc:  # pragma: no cover - requires Windows
+            raise RuntimeError(
+                "pynput 모듈이 설치되어 있지 않습니다. 'pip install pynput' 를 실행해주세요."
+            ) from exc
+
+        keyboard = Controller()
+
+        def press_single_key(key: str) -> None:
+            lower = key.lower()
+            alias = _SPECIAL_KEY_ALIASES.get(lower, lower)
+
+            if hasattr(Key, alias):
+                special_key = getattr(Key, alias)
+                keyboard.press(special_key)
+                keyboard.release(special_key)
+                return
+
+            if len(key) == 1:
+                keyboard.press(key)
+                keyboard.release(key)
+                return
+
+            raise RuntimeError(f"'{key}' 키 입력은 지원되지 않습니다.")
+
         for key in keys:
             if key == SCROLL_UP_KEY:
                 _LOGGER.debug("Scrolling up via mouse wheel")
@@ -69,7 +106,7 @@ class DJMaxInputController(InputController):
                 pyautogui.scroll(-1)
             else:
                 _LOGGER.debug("Pressing key: %s", key)
-                pyautogui.press(key)
+                press_single_key(key)
             time.sleep(self.key_delay)
 
 

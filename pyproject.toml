@@ -12,6 +12,7 @@ requires-python = ">=3.10"
 dependencies = [
     "pyautogui>=0.9",
     "pygetwindow>=0.0.9",
+    "pynput>=1.7",
 ]
 
 [project.optional-dependencies]
