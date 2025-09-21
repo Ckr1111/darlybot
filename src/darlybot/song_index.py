@@ -1,10 +1,12 @@
 """Utilities for loading and working with the song order CSV file."""
 from __future__ import annotations
 
+import contextlib
+import csv
+import io
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, Iterator, List, Sequence, Tuple
-import csv
+from typing import Dict, Iterable, Iterator, List, Sequence, TextIO, Tuple
 import unicodedata
 
 __all__ = [
@@ -68,11 +70,20 @@ class SongIndex:
 
     def __init__(self, csv_path: Path | str):
         self.csv_path = Path(csv_path)
-        self._entries: List[SongEntry] = []
-        self._by_number: Dict[str, SongEntry] = {}
-        self._by_title: Dict[str, SongEntry] = {}
-        self._first_index_by_letter: Dict[str, int] = {}
-        self._load()
+        self._initialise_storage()
+        self._load_from_path()
+
+    @classmethod
+    def from_csv_text(
+        cls, csv_text: str, *, name: str = "<embedded>"
+    ) -> "SongIndex":
+        """Construct a song index from raw CSV text."""
+
+        instance = cls.__new__(cls)
+        instance.csv_path = Path(name)
+        instance._initialise_storage()
+        instance._load_from_text(csv_text)
+        return instance
 
     # ------------------------------------------------------------------
     # Public API
@@ -145,45 +156,59 @@ class SongIndex:
 
     # ------------------------------------------------------------------
     # Internal helpers
-    def _load(self) -> None:
+    def _initialise_storage(self) -> None:
+        self._entries: List[SongEntry] = []
+        self._by_number: Dict[str, SongEntry] = {}
+        self._by_title: Dict[str, SongEntry] = {}
+        self._first_index_by_letter: Dict[str, int] = {}
+
+    def _load_from_path(self) -> None:
         if not self.csv_path.exists():
             raise FileNotFoundError(
                 f"곡순서.csv 파일을 찾을 수 없습니다: {self.csv_path}"
             )
 
         with self.csv_path.open("r", encoding="utf-8-sig", newline="") as fh:
-            reader = csv.DictReader(fh)
-            if not reader.fieldnames:
-                raise SongIndexError(
-                    "곡순서.csv 파일에 헤더가 없습니다. 'title_number,title' 형식을 사용하세요."
-                )
-            headers = {name.lower(): name for name in reader.fieldnames}
-            if "title_number" not in headers or "title" not in headers:
-                raise SongIndexError(
-                    "곡순서.csv 파일은 'title_number' 와 'title' 헤더를 포함해야 합니다."
-                )
+            self._load_from_file(fh)
 
-            title_number_key = headers["title_number"]
-            title_key = headers["title"]
+    def _load_from_text(self, csv_text: str) -> None:
+        csv_text = csv_text.lstrip("\ufeff")
+        with contextlib.closing(io.StringIO(csv_text, newline="")) as fh:
+            self._load_from_file(fh)
 
-            for row in reader:
-                title_number = str(row.get(title_number_key, "")).strip()
-                title = str(row.get(title_key, "")).strip()
-                if not title:
-                    # Skip completely empty rows to make editing easier.
-                    continue
-                letter = self._derive_anchor(title)
-                entry = SongEntry(
-                    index=len(self._entries),
-                    title_number=title_number,
-                    title=title,
-                    letter=letter,
-                )
-                self._entries.append(entry)
-                if title_number:
-                    self._by_number[title_number] = entry
-                self._by_title[self._normalise_text(title)] = entry
-                self._first_index_by_letter.setdefault(letter, entry.index)
+    def _load_from_file(self, fh: TextIO) -> None:
+        reader = csv.DictReader(fh)
+        if not reader.fieldnames:
+            raise SongIndexError(
+                "곡순서.csv 파일에 헤더가 없습니다. 'title_number,title' 형식을 사용하세요."
+            )
+        headers = {name.lower(): name for name in reader.fieldnames}
+        if "title_number" not in headers or "title" not in headers:
+            raise SongIndexError(
+                "곡순서.csv 파일은 'title_number' 와 'title' 헤더를 포함해야 합니다."
+            )
+
+        title_number_key = headers["title_number"]
+        title_key = headers["title"]
+
+        for row in reader:
+            title_number = str(row.get(title_number_key, "")).strip()
+            title = str(row.get(title_key, "")).strip()
+            if not title:
+                # Skip completely empty rows to make editing easier.
+                continue
+            letter = self._derive_anchor(title)
+            entry = SongEntry(
+                index=len(self._entries),
+                title_number=title_number,
+                title=title,
+                letter=letter,
+            )
+            self._entries.append(entry)
+            if title_number:
+                self._by_number[title_number] = entry
+            self._by_title[self._normalise_text(title)] = entry
+            self._first_index_by_letter.setdefault(letter, entry.index)
 
     def _derive_anchor(self, title: str) -> str:
         for char in self._iter_significant_chars(title):
