@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 from typing import Iterable, Optional
 
+from .default_songs import DEFAULT_SONG_CSV
 from .input_controller import DJMaxInputController, SimulatedInputController
 from .navigator import SongNavigator
 from .server import SongServer
@@ -61,7 +62,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def resolve_csv_path(explicit: Optional[Path]) -> Path:
+def resolve_csv_path(explicit: Optional[Path]) -> Optional[Path]:
     if explicit:
         return explicit
 
@@ -91,9 +92,7 @@ def resolve_csv_path(explicit: Optional[Path]) -> Path:
             logging.getLogger(__name__).info("곡순서.csv 위치: %s", path)
             return path
 
-    raise FileNotFoundError(
-        "곡순서.csv 파일을 찾을 수 없습니다. --csv 옵션으로 직접 지정해주세요."
-    )
+    return None
 
 
 def main(argv: Optional[Iterable[str]] = None) -> int:
@@ -105,13 +104,19 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         format="[%(levelname)s] %(message)s",
     )
 
-    try:
-        csv_path = resolve_csv_path(args.csv)
-    except FileNotFoundError as exc:
-        parser.error(str(exc))
-        return 2
-
-    index = SongIndex(csv_path)
+    csv_path = resolve_csv_path(args.csv)
+    if csv_path is not None:
+        try:
+            index = SongIndex(csv_path)
+        except FileNotFoundError as exc:
+            parser.error(str(exc))
+            return 2
+    else:
+        logging.getLogger(__name__).info("내장된 곡순서.csv 데이터를 사용합니다.")
+        index = SongIndex.from_csv_text(
+            DEFAULT_SONG_CSV,
+            name="embedded 곡순서.csv",
+        )
     if args.dry_run:
         controller = SimulatedInputController()
         logging.info("드라이런 모드로 실행 중입니다. 키 입력은 전송되지 않습니다.")

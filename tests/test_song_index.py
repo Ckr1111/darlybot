@@ -87,3 +87,12 @@ def test_key_sequence_for_number_title(sample_index: SongIndex) -> None:
 def test_missing_song_raises(sample_index: SongIndex) -> None:
     with pytest.raises(SongNotFoundError):
         sample_index.get_by_title_number("9999")
+
+
+def test_from_csv_text_supports_embedded_data() -> None:
+    csv_text = "\ufefftitle_number,title\n1000,Embedded Song\n"
+    index = SongIndex.from_csv_text(csv_text, name="embedded.csv")
+
+    entry = index.get_by_title_number("1000")
+    assert entry.title == "Embedded Song"
+    assert index.csv_path.name == "embedded.csv"

@@ -61,14 +61,14 @@ Windows 환경에서 손쉽게 실행할 수 있도록 PyInstaller를 사용한 
 
 ```bash
 pip install pyinstaller
-pyinstaller --name darlybot --onefile --add-data "data\\곡순서.csv;data" --add-data "scripts\\darlybot-userscript.js;scripts" -m darlybot
+pyinstaller --name darlybot --onefile --add-data "scripts\\darlybot-userscript.js;scripts" -m darlybot
 ```
 
-> 💡  Git Bash, macOS, 또는 Linux 셸에서는 경로 구분자를 `/` 로 바꾸고 `:` 를 사용해 목적지를 지정하세요. 예: `--add-data "data/곡순서.csv:data"`.
+> 💡  Git Bash, macOS, 또는 Linux 셸에서는 경로 구분자를 `/` 로 바꾸고 `:` 를 사용해 목적지를 지정하세요. 예: `--add-data "scripts/darlybot-userscript.js:scripts"`.
 
-위 명령은 저장소의 `data/곡순서.csv` 와 브라우저 사용자 스크립트(`scripts/darlybot-userscript.js`)를 함께 복사하고, `-m darlybot` 으로 `src/darlybot/__main__.py` 엔트리 포인트를 실행하도록 패키징합니다.
+위 명령은 브라우저 사용자 스크립트(`scripts/darlybot-userscript.js`)를 함께 복사하고, `-m darlybot` 으로 `src/darlybot/__main__.py` 엔트리 포인트를 실행하도록 패키징합니다. 애플리케이션은 기본적으로 프로그램 내부에 내장된 곡 순서 데이터를 사용하므로, 완성된 `dist/darlybot.exe` 만으로 실행할 수 있습니다.
 
-빌드가 완료되면 `dist/darlybot.exe` 가 생성됩니다. `곡순서.csv` 파일을 실행 파일과 같은 폴더에 배치하면 애플리케이션이 자동으로 인식합니다. 다른 위치에 둘 경우 `--csv` 옵션으로 경로를 지정하세요.
+최신 데이터로 교체하려면 원하는 `곡순서.csv` 파일을 실행 파일과 같은 폴더에 두거나 `--csv` 옵션으로 경로를 지정하세요. 내장 데이터는 `data/곡순서.csv` 파일과 동일하므로 저장소에서 직접 편집해도 됩니다.
 
 ## 테스트
 
