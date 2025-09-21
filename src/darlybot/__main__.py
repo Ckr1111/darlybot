@@ -4,11 +4,15 @@ from __future__ import annotations
 
 import argparse
 import logging
+import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from .controller import DJMaxController
 from .navigator import SongNavigator
-from .server import create_app
+
+if TYPE_CHECKING:  # pragma: no cover - only for type hints
+    from .server import create_app
 
 
 def parse_args() -> argparse.Namespace:
@@ -22,12 +26,44 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true", help="Do not send keyboard input; log only")
     parser.add_argument("--allow-origin", default="*", help="Value for Access-Control-Allow-Origin header")
     parser.add_argument("--log-level", default="INFO", help="Logging level (e.g. INFO, DEBUG)")
+    parser.add_argument(
+        "--log-file",
+        type=Path,
+        help="Optional path to a log file (recommended when running as a background task)",
+    )
     return parser.parse_args()
+
+
+def configure_logging(level: str, log_file: Path | None) -> None:
+    """Initialise application logging for console or background execution."""
+
+    log_level = getattr(logging, level.upper(), logging.INFO)
+    handlers: list[logging.Handler] = []
+
+    if log_file:
+        log_file = log_file.expanduser()
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        handlers.append(logging.FileHandler(log_file, encoding="utf-8"))
+    else:
+        stream = getattr(sys, "stderr", None)
+        if stream is None:
+            fallback = Path.cwd() / "darlybot.log"
+            fallback.parent.mkdir(parents=True, exist_ok=True)
+            handlers.append(logging.FileHandler(fallback, encoding="utf-8"))
+        else:
+            handlers.append(logging.StreamHandler(stream))
+
+    logging.basicConfig(
+        level=log_level,
+        format="[%(asctime)s] %(levelname)s %(name)s: %(message)s",
+        handlers=handlers,
+        force=True,
+    )
 
 
 def main() -> None:
     args = parse_args()
-    logging.basicConfig(level=getattr(logging, args.log_level.upper(), logging.INFO), format="[%(asctime)s] %(levelname)s %(name)s: %(message)s")
+    configure_logging(args.log_level, args.log_file)
     logger = logging.getLogger("darlybot")
 
     try:
@@ -35,6 +71,8 @@ def main() -> None:
     except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
         logger.error("aiohttp 패키지가 필요합니다. 'pip install aiohttp' 명령으로 설치한 뒤 다시 실행하세요.")
         raise SystemExit(2) from exc
+
+    from .server import create_app
 
     try:
         navigator = SongNavigator(args.csv)

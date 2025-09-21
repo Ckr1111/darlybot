@@ -56,6 +56,7 @@ python -m darlybot --csv 곡순서.csv --host 127.0.0.1 --port 8731 --dry-run
 - `--key-delay`: 위/아래 화살표 연타 간격(초)
 - `--jump-delay`: 알파벳 점프 키 입력 후 대기 시간(초)
 - `--dry-run`: 실제 키 입력 없이 로그만 출력 (리눅스/맥에서는 자동 활성화)
+- `--log-file`: 로그를 파일로 저장 (백그라운드 실행 시 권장)
 
 ## Web API 개요
 
@@ -101,10 +102,14 @@ Windows 환경에서 PyInstaller 등을 사용하여 실행 파일로 패키징�
 
 ```bash
 pip install pyinstaller
-pyinstaller -F -n darlybot src/darlybot/__main__.py
+pyinstaller -F -n darlybot --noconsole --add-data "곡순서.csv;." src/darlybot/__main__.py
 ```
 
-생성된 `dist/darlybot.exe` 를 실행하면 됩니다.
+- `--noconsole` 옵션을 사용하면 콘솔 창 없이 백그라운드에서 실행됩니다.
+- `곡순서.csv` 파일은 실행 파일과 같은 폴더에 있어야 하며, 필요하다면 `--csv` 옵션으로 다른 경로를 지정할 수 있습니다.
+- 콘솔이 없는 환경에서는 로그가 자동으로 `darlybot.log` 파일에 저장되거나, `--log-file` 옵션으로 위치를 직접 지정할 수 있습니다.
+
+생성된 `dist/darlybot.exe` 를 Windows 작업 스케줄러 등에 등록하면 로그온 시 자동으로 백그라운드에서 시작하도록 구성할 수 있습니다.
 
 ## 라이선스
 
