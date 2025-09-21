@@ -1,0 +1,29 @@
+{
+  "web_url": "https://b300.vercel.app",
+  "window_caption": "로페봇 연동",
+  "window_title": "DJMAX RESPECT V",
+  "window_title_candidates": [
+    "DJMAX RESPECT V",
+    "DJMAX RESPECT V (64-bit)"
+  ],
+  "csv_path": "곡순서.csv",
+  "press_enter": false,
+  "key_press_interval": 0.08,
+  "down_press_interval": 0.05,
+  "activate_window_pause": 0.35,
+  "toast_duration_ms": 2600,
+  "tile_selector": "[data-song-title], [data-title], .tile, .song-card, .loppe-card",
+  "title_attribute": "data-song-title",
+  "title_fallback_selector": ".title, .name",
+  "title_number_attribute": "data-title-number",
+  "dataset_title_number_keys": [
+    "titleNumber",
+    "titlenumber",
+    "title-number",
+    "songId",
+    "songid"
+  ],
+  "context_menu_text": "DJMAX으로 보내기",
+  "highlight_class": "loppe-bridge-highlight",
+  "debug": false
+}
