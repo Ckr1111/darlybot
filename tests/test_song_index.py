@@ -38,6 +38,20 @@ def test_key_sequence_for_later_entry(sample_index: SongIndex) -> None:
     assert sequence == ["b", "down"]
 
 
+def test_key_sequence_for_hangul_title(sample_index: SongIndex) -> None:
+    entry = sample_index.get_by_title_number("0007")
+    assert entry.letter == "한글"
+    sequence = sample_index.key_sequence_for(entry)
+    assert sequence == ["a", "pageup"]
+
+
+def test_key_sequence_for_symbol_title(sample_index: SongIndex) -> None:
+    entry = sample_index.get_by_title_number("0008")
+    assert entry.letter == "특수문자"
+    sequence = sample_index.key_sequence_for(entry)
+    assert sequence == ["a", "pagedown"]
+
+
 def test_missing_song_raises(sample_index: SongIndex) -> None:
     with pytest.raises(SongNotFoundError):
         sample_index.get_by_title_number("9999")
