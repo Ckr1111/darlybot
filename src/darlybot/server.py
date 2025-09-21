@@ -99,6 +99,9 @@ class SongServer:
                 self._set_headers(status)
                 self.wfile.write(payload)
 
+            def _write_json_error(self, status: HTTPStatus, message: str) -> None:
+                self._write_json({"error": message}, status)
+
             def _parse_path(self) -> str:
                 return urlparse(self.path).path
 
@@ -124,21 +127,21 @@ class SongServer:
                     songs = [entry.to_payload() for entry in server.index]
                     self._write_json({"songs": songs})
                 else:
-                    self.send_error(HTTPStatus.NOT_FOUND, "알 수 없는 경로입니다.")
+                    self._write_json_error(HTTPStatus.NOT_FOUND, "알 수 없는 경로입니다.")
 
             def do_POST(self) -> None:
                 path = self._parse_path()
                 if path == "/navigate":
                     self._handle_navigate()
                 else:
-                    self.send_error(HTTPStatus.NOT_FOUND, "알 수 없는 경로입니다.")
+                    self._write_json_error(HTTPStatus.NOT_FOUND, "알 수 없는 경로입니다.")
 
             # Endpoint handlers ----------------------------------------
             def _handle_navigate(self) -> None:
                 try:
                     payload = self._read_json()
                 except ValueError as exc:
-                    self.send_error(HTTPStatus.BAD_REQUEST, str(exc))
+                    self._write_json_error(HTTPStatus.BAD_REQUEST, str(exc))
                     return
 
                 title_number = payload.get("title_number")
