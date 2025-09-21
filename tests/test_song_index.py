@@ -11,7 +11,7 @@ from darlybot.song_index import (
 
 @pytest.fixture()
 def sample_index(tmp_path: Path) -> SongIndex:
-    csv_path = tmp_path / "곡순서.csv"
+    csv_path = tmp_path / "default.csv"
     csv_path.write_text(
         """title_number,title
 0001,漢字의 꿈

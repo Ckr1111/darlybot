@@ -22,7 +22,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
             "로페봇을 통해 DJMAX RESPECT V의 검색을 자동화하는 도우미입니다."
         ),
     )
-    parser.add_argument("--csv", type=Path, help="곡순서.csv 파일의 위치")
+    parser.add_argument("--csv", type=Path, help="default.csv 파일의 위치")
     parser.add_argument("--host", default="127.0.0.1", help="HTTP 서버 호스트")
     parser.add_argument(
         "--port",
@@ -79,8 +79,8 @@ def resolve_csv_path(explicit: Optional[Path]) -> Path:
         base_candidates = [Path.cwd(), module_dir, module_dir.parent]
 
     for base in base_candidates:
-        candidates.append(base / "곡순서.csv")
-        candidates.append(base / "data" / "곡순서.csv")
+        candidates.append(base / "default.csv")
+        candidates.append(base / "data" / "default.csv")
 
     seen = set()
     for path in candidates:
@@ -88,11 +88,11 @@ def resolve_csv_path(explicit: Optional[Path]) -> Path:
             continue
         seen.add(path)
         if path.exists():
-            logging.getLogger(__name__).info("곡순서.csv 위치: %s", path)
+            logging.getLogger(__name__).info("default.csv 위치: %s", path)
             return path
 
     raise FileNotFoundError(
-        "곡순서.csv 파일을 찾을 수 없습니다. --csv 옵션으로 직접 지정해주세요."
+        "default.csv 파일을 찾을 수 없습니다. --csv 옵션으로 직접 지정해주세요."
     )
 
 
