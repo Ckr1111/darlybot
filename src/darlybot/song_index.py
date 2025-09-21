@@ -64,7 +64,7 @@ class SongIndex:
     _SYMBOL_LETTER = "특수문자"
 
     #: Initial key sequences associated with each non-alphabet bucket.
-    _HANGUL_PREFIX: Tuple[str, ...] = ("a", "pageup")
+    _HANGUL_BASE_PREFIX: Tuple[str, ...] = ("a",)
     _SYMBOL_PREFIX: Tuple[str, ...] = ("a", "pagedown")
 
     def __init__(self, csv_path: Path | str):
@@ -121,7 +121,7 @@ class SongIndex:
 
         The sequence begins with the shortcut needed to jump to the correct
         bucket (for example the lowercase letter for ``A~Z`` titles or the
-        ``a`` + ``pageup`` / ``pagedown`` combination for 한글 및 특수문자 곡).
+        ``a`` + mouse wheel / ``pagedown`` combination for 한글 및 특수문자 곡).
         The remaining keys are ``'up'`` or ``'down'`` presses that move from
         the bucket's first song to the desired entry.
         """
@@ -187,17 +187,40 @@ class SongIndex:
                 self._first_index_by_letter.setdefault(letter, entry.index)
                 self._prefix_keys_by_letter.setdefault(letter, prefix)
 
+        self._finalise_special_prefixes()
+
     def _derive_anchor(self, title: str) -> Tuple[str, Tuple[str, ...]]:
         for char in self._iter_significant_chars(title):
             if char.isascii() and char.isalpha():
                 lower = char.lower()
                 return char.upper(), (lower,)
             if self._is_hangul(char):
-                return self._HANGUL_LETTER, self._HANGUL_PREFIX
+                return self._HANGUL_LETTER, self._HANGUL_BASE_PREFIX
             return self._SYMBOL_LETTER, self._SYMBOL_PREFIX
         raise SongIndexError(
             f"제목 '{title}' 에서 탐색에 사용할 시작 문자를 찾을 수 없습니다."
         )
+
+    def _finalise_special_prefixes(self) -> None:
+        self._finalise_hangul_prefix()
+
+    def _finalise_hangul_prefix(self) -> None:
+        letter = self._HANGUL_LETTER
+        if letter not in self._first_index_by_letter:
+            return
+
+        # The game does not provide a direct shortcut to the Hangul bucket, so
+        # we move to the ``A`` section and scroll upwards.  When the dataset
+        # does not include any ``A`` titles we keep the base prefix and rely on
+        # the caller to provide manual input if necessary.
+        hangul_anchor = self._first_index_by_letter[letter]
+        ascii_anchor = self._first_index_by_letter.get("A")
+        if ascii_anchor is None:
+            return
+
+        scroll_steps = max(0, ascii_anchor - hangul_anchor)
+        prefix = self._HANGUL_BASE_PREFIX + (SCROLL_UP_KEY,) * scroll_steps
+        self._prefix_keys_by_letter[letter] = prefix
 
     def _iter_significant_chars(self, text: str) -> Iterable[str]:
         for char in text:

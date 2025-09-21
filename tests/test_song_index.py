@@ -4,6 +4,7 @@ import pytest
 
 from darlybot.song_index import (
     SCROLL_DOWN_KEY,
+    SCROLL_UP_KEY,
     SongIndex,
     SongNotFoundError,
 )
@@ -14,11 +15,11 @@ def sample_index(tmp_path: Path) -> SongIndex:
     csv_path = tmp_path / "곡순서.csv"
     csv_path.write_text(
         """title_number,title
+0008,!Exclaim
+0007,가을 바람
 0001,Alpha
 0002,Beautiful Day
 0003,Bullet Strike
-0007,가을 바람
-0008,!Exclaim
 """,
         encoding="utf-8",
     )
@@ -52,7 +53,7 @@ def test_key_sequence_for_hangul_title(sample_index: SongIndex) -> None:
     entry = sample_index.get_by_title_number("0007")
     assert entry.letter == "한글"
     sequence = sample_index.key_sequence_for(entry)
-    assert sequence == ["a", "pageup"]
+    assert sequence == ["a", SCROLL_UP_KEY]
 
 
 def test_key_sequence_for_symbol_title(sample_index: SongIndex) -> None:
