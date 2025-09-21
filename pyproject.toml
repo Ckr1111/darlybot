@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rofebot-bridge"
+version = "0.1.0"
+description = "Local bridge between RofeBot and DJMAX RESPECT V"
+authors = [{ name = "darlybot" }]
+requires-python = ">=3.10"
+dependencies = [
+    "pywinauto>=0.6.8; platform_system == 'Windows'",
+    "pywin32>=305; platform_system == 'Windows'",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
