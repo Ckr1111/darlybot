@@ -21,3 +21,14 @@ dev = [
 
 [project.scripts]
 darlybot = "darlybot.app:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+darlybot = [
+    "data/곡순서.csv",
+]
