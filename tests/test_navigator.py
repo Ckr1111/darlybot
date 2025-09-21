@@ -19,7 +19,7 @@ def test_dry_run_does_not_trigger_controller(sample_index):
     controller = SimulatedInputController()
     navigator = SongNavigator(sample_index, controller)
     result = navigator.navigate(title="Bolt", dry_run=True)
-    assert result.keys == ("b", SCROLL_DOWN_KEY)
+    assert result.keys == ("shift_r", "shift", "b", SCROLL_DOWN_KEY)
     assert not controller.sent_keys
     assert not result.performed
 
@@ -29,7 +29,7 @@ def test_navigate_sends_keys(sample_index):
     navigator = SongNavigator(sample_index, controller)
     result = navigator.navigate(title_number="0003")
     assert controller.focused
-    assert controller.sent_keys == ["b", SCROLL_DOWN_KEY]
+    assert controller.sent_keys == ["shift_r", "shift", "b", SCROLL_DOWN_KEY]
     assert result.performed
 
 

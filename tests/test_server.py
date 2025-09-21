@@ -77,8 +77,8 @@ def test_navigate_endpoint_sends_keys(sample_server):
         data={"title_number": "0002"},
     )
     assert payload["title"] == "Beta"
-    assert payload["keys"] == ["b"]
-    assert controller.sent_keys == ["b"]
+    assert payload["keys"] == ["shift_r", "shift", "b"]
+    assert controller.sent_keys == ["shift_r", "shift", "b"]
 
 
 def test_unknown_path_returns_localised_error(sample_server):

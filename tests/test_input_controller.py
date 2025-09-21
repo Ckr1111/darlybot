@@ -5,6 +5,8 @@ from darlybot.song_index import SCROLL_DOWN_KEY, SCROLL_UP_KEY
 class _FakeKey:
     page_up = object()
     page_down = object()
+    shift = object()
+    shift_r = object()
 
 
 class _FakeKeyCode:
@@ -40,10 +42,16 @@ def test_send_keys_translates_special_keys() -> None:
     controller._keyboard_controller = _FakeKeyboardController()  # type: ignore[attr-defined]
     controller._mouse_controller = _FakeMouseController()  # type: ignore[attr-defined]
 
-    controller.send_keys(["a", "pageup", SCROLL_DOWN_KEY, SCROLL_UP_KEY])
+    controller.send_keys([
+        "shift_r",
+        "shift",
+        "a",
+        SCROLL_DOWN_KEY,
+        SCROLL_UP_KEY,
+    ])
 
     keyboard = controller._keyboard_controller  # type: ignore[attr-defined]
     mouse = controller._mouse_controller  # type: ignore[attr-defined]
 
-    assert keyboard.tapped == ["char:a", _FakeKey.page_up]
+    assert keyboard.tapped == [_FakeKey.shift_r, _FakeKey.shift, "char:a"]
     assert mouse.scroll_events == [(0, -1), (0, 1)]

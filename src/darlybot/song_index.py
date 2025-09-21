@@ -57,15 +57,14 @@ class SongIndex:
     integration API.
     """
 
-    #: Logical letter name used for titles that start with a Hangul character.
+    #: Logical letter names used when deriving navigation groups.
+    _HANJA_LETTER = "한자"
     _HANGUL_LETTER = "한글"
-
-    #: Logical letter name used for titles that start with digits or symbols.
     _SYMBOL_LETTER = "특수문자"
+    _NUMBER_LETTER = "숫자"
 
-    #: Initial key sequences associated with each non-alphabet bucket.
-    _HANGUL_PREFIX: Tuple[str, ...] = ("a", "pageup")
-    _SYMBOL_PREFIX: Tuple[str, ...] = ("a", "pagedown")
+    #: Keys that reset the in-game list to its initial ordering.
+    _RESET_SEQUENCE: Tuple[str, ...] = ("shift_r", "shift")
 
     def __init__(self, csv_path: Path | str):
         self.csv_path = Path(csv_path)
@@ -73,7 +72,6 @@ class SongIndex:
         self._by_number: Dict[str, SongEntry] = {}
         self._by_title: Dict[str, SongEntry] = {}
         self._first_index_by_letter: Dict[str, int] = {}
-        self._prefix_keys_by_letter: Dict[str, Sequence[str]] = {}
         self._load()
 
     # ------------------------------------------------------------------
@@ -119,27 +117,28 @@ class SongIndex:
     def key_sequence_for(self, entry: SongEntry) -> List[str]:
         """Return the sequence of keys required to reach ``entry``.
 
-        The sequence begins with the shortcut needed to jump to the correct
-        bucket (for example the lowercase letter for ``A~Z`` titles or the
-        ``a`` + ``pageup`` / ``pagedown`` combination for 한글 및 특수문자 곡).
-        The remaining keys are ``'up'`` or ``'down'`` presses that move from
-        the bucket's first song to the desired entry.
+        The sequence begins by resetting the list to its initial position using
+        ``Right Shift`` followed by ``Left Shift``.  When navigating an
+        ``A~Z`` bucket the corresponding lowercase letter is then pressed to
+        jump to the bucket.  For the ``한자``, ``한글``, ``특수문자`` and ``숫자``
+        buckets the selection simply scrolls down from the top.  The remaining
+        keys are scroll events that move from the bucket's first song to the
+        desired entry.
         """
 
-        try:
-            prefix = list(self._prefix_keys_by_letter[entry.letter])
-        except KeyError as exc:  # pragma: no cover - defensive mapping lookup
-            raise SongIndexError(
-                f"'{entry.letter}' 그룹의 초깃값을 찾을 수 없습니다. 곡순서.csv 를 확인해주세요."
-            ) from exc
+        steps: List[str] = list(self._RESET_SEQUENCE)
 
-        letter_index = self.letter_anchor(entry.letter)
-        offset = entry.index - letter_index
+        if self._is_ascii_letter(entry.letter):
+            steps.append(entry.letter.lower())
+            current_index = self.letter_anchor(entry.letter)
+        else:
+            current_index = 0
+
+        offset = entry.index - current_index
         if offset < 0:
             arrow = SCROLL_UP_KEY
         else:
             arrow = SCROLL_DOWN_KEY
-        steps = prefix
         for _ in range(abs(offset)):
             steps.append(arrow)
         return steps
@@ -173,7 +172,7 @@ class SongIndex:
                 if not title:
                     # Skip completely empty rows to make editing easier.
                     continue
-                letter, prefix = self._derive_anchor(title)
+                letter = self._derive_anchor(title)
                 entry = SongEntry(
                     index=len(self._entries),
                     title_number=title_number,
@@ -185,16 +184,18 @@ class SongIndex:
                     self._by_number[title_number] = entry
                 self._by_title[self._normalise_text(title)] = entry
                 self._first_index_by_letter.setdefault(letter, entry.index)
-                self._prefix_keys_by_letter.setdefault(letter, prefix)
 
-    def _derive_anchor(self, title: str) -> Tuple[str, Tuple[str, ...]]:
+    def _derive_anchor(self, title: str) -> str:
         for char in self._iter_significant_chars(title):
-            if char.isascii() and char.isalpha():
-                lower = char.lower()
-                return char.upper(), (lower,)
+            if self._is_hanja(char):
+                return self._HANJA_LETTER
             if self._is_hangul(char):
-                return self._HANGUL_LETTER, self._HANGUL_PREFIX
-            return self._SYMBOL_LETTER, self._SYMBOL_PREFIX
+                return self._HANGUL_LETTER
+            if char.isdigit():
+                return self._NUMBER_LETTER
+            if char.isascii() and char.isalpha():
+                return char.upper()
+            return self._SYMBOL_LETTER
         raise SongIndexError(
             f"제목 '{title}' 에서 탐색에 사용할 시작 문자를 찾을 수 없습니다."
         )
@@ -207,6 +208,12 @@ class SongIndex:
 
     def _is_hangul(self, char: str) -> bool:
         return "HANGUL" in unicodedata.name(char, "")
+
+    def _is_hanja(self, char: str) -> bool:
+        return "CJK UNIFIED IDEOGRAPH" in unicodedata.name(char, "")
+
+    def _is_ascii_letter(self, letter: str) -> bool:
+        return len(letter) == 1 and letter.isascii() and letter.isalpha()
 
     def _normalise_text(self, text: str) -> str:
         return unicodedata.normalize("NFKC", text).casefold().strip()
