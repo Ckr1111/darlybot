@@ -19,7 +19,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="darlybot",
         description=(
-            "로페봇 타일을 통해 DJMAX RESPECT V 의 검색을 자동화하는 로컬 도우미입니다."
+            "로페봇을 통해 DJMAX RESPECT V의 검색을 자동화하는 도우미입니다."
         ),
     )
     parser.add_argument("--csv", type=Path, help="곡순서.csv 파일의 위치")
@@ -33,7 +33,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--window-title",
         default="DJMAX RESPECT V",
-        help="포커스를 가져올 게임 창 제목",
+        help="포커스를 가져올 게임 창",
     )
     parser.add_argument(
         "--activation-delay",
@@ -43,7 +43,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--key-delay",
-        default=0.05,
+        default=0.02,
         type=float,
         help="각 키 입력 사이의 대기 시간 (초)",
     )
