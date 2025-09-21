@@ -43,7 +43,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--key-delay",
-        default=0.3,
+        default=0.08,
         type=float,
         help="각 키 입력 사이의 대기 시간 (초)",
     )
