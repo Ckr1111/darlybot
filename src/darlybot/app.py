@@ -4,8 +4,14 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+import threading
+import webbrowser
+from importlib import resources
 from pathlib import Path
 from typing import Iterable, Optional
+
+import pystray
+from PIL import Image
 
 from .default_songs import DEFAULT_SONG_CSV
 from .input_controller import DJMaxInputController, SimulatedInputController
@@ -14,6 +20,8 @@ from .server import SongServer
 from .song_index import SongIndex
 
 _DEFAULT_PORT = 8972
+_TRAY_TITLE = "Darlybot Helper"
+_LOPEBOT_URL = "https://b300.vercel.app"
 
 
 def build_argument_parser() -> argparse.ArgumentParser:
@@ -95,6 +103,49 @@ def resolve_csv_path(explicit: Optional[Path]) -> Optional[Path]:
     return None
 
 
+def _load_tray_icon_image() -> Image.Image:
+    with resources.as_file(resources.files(__package__) / "icon.ico") as icon_path:
+        with Image.open(icon_path) as source:
+            return source.convert("RGBA")
+
+
+def _start_tray_icon(
+    server: SongServer, shutdown_event: threading.Event
+) -> Optional[pystray.Icon]:
+    logger = logging.getLogger(__name__)
+
+    try:
+        image = _load_tray_icon_image()
+    except FileNotFoundError:
+        logger.warning("트레이 아이콘 파일을 찾을 수 없어 시스템 트레이를 비활성화합니다.")
+        return None
+    except OSError as exc:
+        logger.warning("트레이 아이콘을 불러오지 못했습니다: %s", exc)
+        return None
+
+    def _open_lopebot(_: pystray.Icon, __: pystray.MenuItem) -> None:
+        webbrowser.open(_LOPEBOT_URL, new=0, autoraise=True)
+
+    def _quit(icon: pystray.Icon, __: pystray.MenuItem) -> None:
+        shutdown_event.set()
+        server.stop()
+        icon.stop()
+
+    menu = pystray.Menu(
+        pystray.MenuItem("로페봇 접속", _open_lopebot),
+        pystray.MenuItem("프로그램 종료", _quit),
+    )
+
+    try:
+        icon = pystray.Icon("darlybot", image, _TRAY_TITLE, menu)
+    except Exception as exc:  # pragma: no cover - backend specific failures
+        logger.warning("시스템 트레이 아이콘을 초기화하지 못했습니다: %s", exc)
+        return None
+
+    icon.run_detached()
+    return icon
+
+
 def main(argv: Optional[Iterable[str]] = None) -> int:
     parser = build_argument_parser()
     args = parser.parse_args(list(argv) if argv is not None else None)
@@ -135,12 +186,22 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         port=args.port,
     )
 
+    shutdown_event = threading.Event()
+    tray_icon: Optional[pystray.Icon] = None
+
     try:
-        server.serve_forever()
+        server.start()
+        tray_icon = _start_tray_icon(server, shutdown_event)
+        while server.is_running():
+            if shutdown_event.wait(0.5):
+                break
     except KeyboardInterrupt:  # pragma: no cover - graceful shutdown
         logging.info("사용자에 의해 중지되었습니다.")
+        shutdown_event.set()
     finally:
         server.stop()
+        if tray_icon is not None:
+            tray_icon.stop()
     return 0
 
 
