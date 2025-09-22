@@ -10,8 +10,10 @@ readme = "README.md"
 authors = [{name = "Darlybot Maintainers"}]
 requires-python = ">=3.10"
 dependencies = [
+    "Pillow>=9.0.0",
     "pynput>=1.7",
     "pygetwindow>=0.0.9",
+    "pystray>=0.19",
 ]
 
 [project.optional-dependencies]
@@ -31,4 +33,5 @@ where = ["src"]
 [tool.setuptools.package-data]
 darlybot = [
     "data/곡순서.csv",
+    "icon.ico",
 ]

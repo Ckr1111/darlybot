@@ -12,6 +12,7 @@ from .input_controller import DJMaxInputController, SimulatedInputController
 from .navigator import SongNavigator
 from .server import SongServer
 from .song_index import SongIndex
+from .tray import run_tray
 
 _DEFAULT_PORT = 8972
 
@@ -135,12 +136,22 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         port=args.port,
     )
 
+    stop_called = False
+
+    def stop_server_once() -> None:
+        nonlocal stop_called
+        if stop_called:
+            return
+        stop_called = True
+        server.stop()
+
     try:
-        server.serve_forever()
+        server.start()
+        run_tray(stop_server_once)
     except KeyboardInterrupt:  # pragma: no cover - graceful shutdown
         logging.info("사용자에 의해 중지되었습니다.")
     finally:
-        server.stop()
+        stop_server_once()
     return 0
 
 
