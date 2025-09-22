@@ -12,6 +12,8 @@ requires-python = ">=3.10"
 dependencies = [
     "pynput>=1.7",
     "pygetwindow>=0.0.9",
+    "pystray>=0.19",
+    "Pillow>=9",
 ]
 
 [project.optional-dependencies]
@@ -31,4 +33,5 @@ where = ["src"]
 [tool.setuptools.package-data]
 darlybot = [
     "data/곡순서.csv",
+    "favicon.ico",
 ]

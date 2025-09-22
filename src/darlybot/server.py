@@ -106,6 +106,11 @@ class SongServer:
             self._thread.join(timeout=1)
             self._thread = None
 
+    def is_running(self) -> bool:
+        """Return ``True`` if the background server thread is active."""
+
+        return self._thread is not None and self._thread.is_alive()
+
     def _render_homepage(self) -> str:
         """Return an informational HTML page for ``GET /`` requests."""
 

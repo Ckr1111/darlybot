@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+import threading
 from pathlib import Path
 from typing import Iterable, Optional
 
@@ -12,8 +13,10 @@ from .input_controller import DJMaxInputController, SimulatedInputController
 from .navigator import SongNavigator
 from .server import SongServer
 from .song_index import SongIndex
+from .tray import SystemTray
 
 _DEFAULT_PORT = 8972
+_WEBSITE_URL = "https://b300.vercel.app"
 
 
 def build_argument_parser() -> argparse.ArgumentParser:
@@ -135,11 +138,30 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         port=args.port,
     )
 
+    shutdown_event = threading.Event()
+
+    def request_shutdown() -> None:
+        shutdown_event.set()
+
+    tray: Optional[SystemTray] = None
+
     try:
-        server.serve_forever()
+        server.start()
+
+        try:
+            tray = SystemTray(on_quit=request_shutdown, website_url=_WEBSITE_URL)
+            tray.start()
+        except Exception:  # pragma: no cover - OS level availability varies
+            logging.getLogger(__name__).exception("시스템 트레이 아이콘을 시작하지 못했습니다.")
+            tray = None
+
+        while server.is_running() and not shutdown_event.wait(0.5):
+            pass
     except KeyboardInterrupt:  # pragma: no cover - graceful shutdown
         logging.info("사용자에 의해 중지되었습니다.")
     finally:
+        if tray is not None:
+            tray.stop()
         server.stop()
     return 0
 
