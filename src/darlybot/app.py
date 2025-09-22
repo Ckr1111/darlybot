@@ -12,6 +12,7 @@ from .input_controller import DJMaxInputController, SimulatedInputController
 from .navigator import SongNavigator
 from .server import SongServer
 from .song_index import SongIndex
+from .tray import SystemTray, TrayUnavailableError
 
 _DEFAULT_PORT = 8972
 
@@ -134,6 +135,49 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         host=args.host,
         port=args.port,
     )
+
+    tray: Optional[SystemTray] = None
+    tray_icon_path = Path(__file__).resolve().parent / "favicon.ico"
+
+    try:
+        tray = SystemTray(
+            icon_path=tray_icon_path,
+            tooltip="Darlybot Helper",
+            open_url="https://b300.vercel.app",
+        )
+    except TrayUnavailableError as exc:
+        logging.getLogger(__name__).warning(
+            "시스템 트레이를 사용할 수 없어 콘솔 모드로 실행합니다: %s", exc
+        )
+    except Exception:  # pragma: no cover - defensive logging
+        logging.getLogger(__name__).exception(
+            "시스템 트레이 초기화 중 문제가 발생했습니다. 콘솔 모드로 계속 실행합니다."
+        )
+        tray = None
+
+    if tray is not None:
+        try:
+            server.start()
+            logging.info(
+                "시스템 트레이에 아이콘이 추가되었습니다. 트레이 메뉴에서 종료하거나 웹 페이지를 열 수 있습니다."
+            )
+            tray.run()
+            return 0
+        except KeyboardInterrupt:  # pragma: no cover - graceful shutdown
+            logging.info("사용자에 의해 중지되었습니다.")
+            return 0
+        except TrayUnavailableError as exc:
+            logging.getLogger(__name__).warning(
+                "시스템 트레이 실행 중 문제가 발생했습니다. 콘솔 모드로 전환합니다: %s",
+                exc,
+            )
+        except Exception:  # pragma: no cover - defensive logging
+            logging.getLogger(__name__).exception(
+                "시스템 트레이 실행 중 예기치 않은 오류가 발생했습니다. 콘솔 모드로 전환합니다."
+            )
+        finally:
+            tray.stop()
+            server.stop()
 
     try:
         server.serve_forever()
