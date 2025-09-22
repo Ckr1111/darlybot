@@ -2,10 +2,20 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import logging
 import sys
+import webbrowser
+from importlib import resources
 from pathlib import Path
 from typing import Iterable, Optional
+
+try:  # pragma: no cover - optional dependency during tests
+    import pystray
+    from PIL import Image
+except ImportError:  # pragma: no cover - gracefully fall back when unavailable
+    pystray = None  # type: ignore[assignment]
+    Image = None  # type: ignore[assignment]
 
 from .default_songs import DEFAULT_SONG_CSV
 from .input_controller import DJMaxInputController, SimulatedInputController
@@ -14,6 +24,57 @@ from .server import SongServer
 from .song_index import SongIndex
 
 _DEFAULT_PORT = 8972
+_LOPEBOT_URL = "https://b300.vercel.app"
+_TRAY_ICON_FILE = "icon.ico"
+
+
+def _load_tray_icon_image() -> "Image.Image":
+    if Image is None:
+        raise RuntimeError("Pillow이(가) 설치되어 있지 않아 트레이 아이콘을 불러올 수 없습니다.")
+
+    with resources.files(__package__).joinpath(_TRAY_ICON_FILE).open("rb") as fp:
+        image = Image.open(fp)
+        try:
+            return image.convert("RGBA")
+        finally:
+            image.close()
+
+
+def _open_lopebot_page() -> None:
+    try:
+        webbrowser.open(_LOPEBOT_URL, new=0, autoraise=True)
+    except Exception as exc:  # pragma: no cover - user environment dependent
+        logging.getLogger(__name__).warning("로페봇 페이지를 여는 데 실패했습니다: %s", exc)
+
+
+def _create_tray_icon(server: SongServer) -> "Optional[pystray.Icon]":
+    logger = logging.getLogger(__name__)
+
+    if pystray is None or Image is None:
+        logger.warning("pystray 또는 Pillow를 사용할 수 없어 트레이 아이콘을 비활성화합니다.")
+        return None
+
+    try:
+        image = _load_tray_icon_image()
+    except Exception as exc:  # pragma: no cover - resource loading failure
+        logger.warning("트레이 아이콘 이미지를 불러오지 못했습니다: %s", exc)
+        return None
+
+    def handle_open(_: pystray.Icon, __: pystray.MenuItem) -> None:
+        logger.info("로페봇 웹 페이지를 엽니다.")
+        _open_lopebot_page()
+
+    def handle_quit(icon: pystray.Icon, __: pystray.MenuItem) -> None:
+        logger.info("시스템 트레이에서 종료가 요청되었습니다.")
+        server.stop()
+        icon.stop()
+
+    menu = pystray.Menu(
+        pystray.MenuItem("로페봇 접속", handle_open),
+        pystray.MenuItem("프로그램 종료", handle_quit, default=True),
+    )
+
+    return pystray.Icon("darlybot", image, "Darlybot", menu)
 
 
 def build_argument_parser() -> argparse.ArgumentParser:
@@ -135,11 +196,30 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         port=args.port,
     )
 
+    tray_icon = _create_tray_icon(server)
+
     try:
-        server.serve_forever()
+        if tray_icon is None:
+            server.serve_forever()
+        else:
+            try:
+                server.start()
+                tray_icon.run()
+            except KeyboardInterrupt:
+                raise
+            except Exception as exc:  # pragma: no cover - tray fallback path
+                logging.getLogger(__name__).warning(
+                    "트레이 아이콘 실행에 실패하여 기본 모드로 전환합니다: %s", exc
+                )
+                server.stop()
+                tray_icon = None
+                server.serve_forever()
     except KeyboardInterrupt:  # pragma: no cover - graceful shutdown
         logging.info("사용자에 의해 중지되었습니다.")
     finally:
+        if tray_icon is not None and getattr(tray_icon, "visible", False):
+            with contextlib.suppress(Exception):  # pragma: no cover - best effort cleanup
+                tray_icon.stop()
         server.stop()
     return 0
 
