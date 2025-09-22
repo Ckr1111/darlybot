@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+import threading
 from pathlib import Path
 from typing import Iterable, Optional
 
@@ -12,6 +13,7 @@ from .input_controller import DJMaxInputController, SimulatedInputController
 from .navigator import SongNavigator
 from .server import SongServer
 from .song_index import SongIndex
+from .system_tray import SystemTrayController
 
 _DEFAULT_PORT = 8972
 
@@ -136,10 +138,36 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
     )
 
     try:
-        server.serve_forever()
+        server.start()
+    except OSError as exc:
+        logging.getLogger(__name__).error("HTTP 서버를 시작할 수 없습니다: %s", exc)
+        return 1
+
+    stop_event = threading.Event()
+    tray: Optional[SystemTrayController] = None
+    try:
+        try:
+            tray = SystemTrayController(stop_event=stop_event)
+            tray.start()
+        except Exception as exc:  # pragma: no cover - tray startup best effort
+            logging.getLogger(__name__).warning(
+                "시스템 트레이 아이콘을 시작하지 못했습니다: %s", exc
+            )
+            tray = None
+
+        if tray is None:  # pragma: no cover - fallback path
+            logging.getLogger(__name__).info(
+                "트레이 아이콘 없이 실행 중입니다. Ctrl+C로 종료할 수 있습니다."
+            )
+
+        while not stop_event.wait(0.5):
+            pass
     except KeyboardInterrupt:  # pragma: no cover - graceful shutdown
         logging.info("사용자에 의해 중지되었습니다.")
+        stop_event.set()
     finally:
+        if tray is not None:
+            tray.stop()
         server.stop()
     return 0
 
