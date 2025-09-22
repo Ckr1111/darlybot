@@ -392,6 +392,7 @@ DEFAULT_SONG_CSV = """title_number,title
 179,Lisrim
 131,Long Vacation
 534,Look out ~Here comes my love~
+740,Löschen
 741,Lost Desire (feat.Sennzai)
 70,Lost n' found
 180,Lost Serenity
@@ -411,7 +412,6 @@ DEFAULT_SONG_CSV = """title_number,title
 397,Luv Flow ~Funky House Mix~
 398,Luv is True
 492,Luv Yourself
-740,Löschen
 665,Mad (feat. WaMi)
 666,MADNESS (feat. 유일(U1))
 279,Magnolia
