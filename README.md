@@ -7,6 +7,7 @@
 ## 인게임
 
 정렬 기준을 `곡 제목 A to Z`로 설정하여 주세요.
+
 DJMAX RESPECT V의 **FREESTYLE** 혹은 **FREE MATCH**로 들어가 **ALL TRACK**탭에 위치해 주세요.
 
 
